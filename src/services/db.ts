@@ -72,13 +72,17 @@ export async function getPlayersForGame(gameId: string): Promise<{ id: string; n
   if (error) throw error;
   console.log("getPlayersForGame raw data:", JSON.stringify(data, null, 2));
   // Map to player objects, filter out undefined/null
-  return (data as any[])
+  type GamePlayerRow = {
+    player_id: string;
+    players: Player | Player[] | null;
+  };
+  return (data as GamePlayerRow[])
     .map(row => {
       if (!row.players) return null;
       if (Array.isArray(row.players)) return row.players[0];
       return row.players;
     })
-    .filter((p: Player | null | undefined): p is Player => !!p);
+    .filter((p): p is Player => !!p);
 }
 
 // Get the most recent active game
