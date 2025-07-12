@@ -1,12 +1,9 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import NewGameModal from "./NewGameModal";
 import { useState, useEffect } from "react";
 import { useGameStore, Teams } from "../store/gameStore";
-import { getOrCreatePlayerByName, createGame, addPlayersToGame, getPlayersForGame } from "../services/db";
-import { PlusIcon } from '@heroicons/react/24/solid';
-import { BeakerIcon } from '@heroicons/react/24/solid';
+import { getPlayersForGame } from "../services/db";
 import { ChartBarIcon, UserGroupIcon, HomeIcon } from '@heroicons/react/24/outline';
 
 const nav = [
@@ -17,18 +14,12 @@ const nav = [
 
 export default function Header() {
   const pathname = usePathname();
-  const [modalOpen, setModalOpen] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const shots = useGameStore((state) => state.shots);
-  const currentGameId = useGameStore((state) => state.currentGameId);
+  const [animateKey, setAnimateKey] = useState(0);
   const setTeams = useGameStore((state) => state.setTeams);
-  const setCurrentGameId = useGameStore((state) => state.setCurrentGameId);
-  const resetShots = useGameStore((state) => state.resetShots);
-  const setSelectedPlayer = useGameStore((state) => state.setSelectedPlayer);
+  const currentGameId = useGameStore((state) => state.currentGameId);
 
   // Animated title logic
   const title = "Beer Pong Stat Tracker";
-  const [animateKey, setAnimateKey] = useState(0);
   useEffect(() => {
     const interval = setInterval(() => setAnimateKey((k) => k + 1), 10000);
     return () => clearInterval(interval);
@@ -43,23 +34,9 @@ export default function Header() {
         const mid = Math.ceil(players.length / 2);
         const teams: Teams = [players.slice(0, mid), players.slice(mid)];
         setTeams(teams);
-        setSelectedPlayer(players[0] || null);
       })();
     }
-  }, [pathname, currentGameId, setTeams, setSelectedPlayer]);
-
-  function handleNewGameClick() {
-    if (currentGameId && shots.length > 0) {
-      setConfirmOpen(true);
-    } else {
-      setModalOpen(true);
-    }
-  }
-
-  function handleConfirm() {
-    setConfirmOpen(false);
-    setModalOpen(true);
-  }
+  }, [pathname, currentGameId, setTeams]);
 
   return (
     <header className="sticky top-0 z-20 bg-zinc-900/90 backdrop-blur border-b border-zinc-800 w-full shadow-sm">
@@ -83,10 +60,11 @@ export default function Header() {
       </div>
       <nav className="flex justify-center gap-4 py-3 items-center relative">
         {nav.map((item) => {
-          let icon = null;
-          if (item.name === "Track") icon = <HomeIcon className="w-5 h-5 mr-1" />;
-          if (item.name === "Stats") icon = <ChartBarIcon className="w-5 h-5 mr-1" />;
-          if (item.name === "Compare") icon = <UserGroupIcon className="w-5 h-5 mr-1" />;
+          const icon =
+            item.name === "Track" ? <HomeIcon className="w-5 h-5 mr-1" /> :
+            item.name === "Stats" ? <ChartBarIcon className="w-5 h-5 mr-1" /> :
+            item.name === "Compare" ? <UserGroupIcon className="w-5 h-5 mr-1" /> :
+            null;
           return (
             <Link
               key={item.href}
@@ -99,60 +77,7 @@ export default function Header() {
             </Link>
           );
         })}
-        {/* Always reserve space for the New Game button, but only show it on Track page */}
-        <span className="ml-6 w-[120px] hidden sm:inline-block" />
-        {pathname === "/" && (
-          <button
-            className="ml-6 px-4 py-2 rounded-full bg-green-600 text-white font-semibold text-sm shadow hover:bg-green-500 transition-colors flex items-center gap-2 hidden sm:inline-flex"
-            onClick={handleNewGameClick}
-          >
-            <PlusIcon className="w-5 h-5" />
-            New Game
-          </button>
-        )}
       </nav>
-      {modalOpen && (
-        <NewGameModal
-          open={modalOpen}
-          onClose={() => setModalOpen(false)}
-          onStart={async (teamsInput, gameName) => {
-            // 1. Look up or create players
-            const allNames = teamsInput.flat();
-            const players = await Promise.all(
-              allNames.map(async (name) => await getOrCreatePlayerByName(name))
-            );
-            // 2. Rebuild teams with player objects
-            const teamSizes = teamsInput.map(t => t.length);
-            let idx = 0;
-            const teams: Teams = [
-              players.slice(idx, idx + teamSizes[0]),
-              players.slice(idx + teamSizes[0], idx + teamSizes[0] + teamSizes[1])
-            ];
-            // 3. Create new game with name
-            const game = await createGame(gameName);
-            // 4. Add players to game_players join table
-            await addPlayersToGame(game.id, players.map((p) => p.id));
-            // 5. Update Zustand
-            setTeams(teams);
-            setCurrentGameId(game.id);
-            resetShots();
-            setSelectedPlayer(players[0]);
-            // 6. Close modal
-            setModalOpen(false);
-          }}
-        />
-      )}
-      {confirmOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
-            <div className="mb-4 font-semibold">A game is in progress. Start a new game?</div>
-            <div className="flex gap-2 justify-end">
-              <button className="px-4 py-2 rounded bg-gray-200" onClick={() => setConfirmOpen(false)}>Cancel</button>
-              <button className="px-4 py-2 rounded bg-blue-600 text-white font-semibold" onClick={handleConfirm}>Start New Game</button>
-            </div>
-          </div>
-        </div>
-      )}
     </header>
   );
-} 
+}

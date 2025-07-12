@@ -1,9 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect } from "react";
-import { supabase } from "../lib/supabase";
-import { useGameStore, Player, Shot, Teams } from "../store/gameStore";
+import { useGameStore, Teams } from "../store/gameStore";
 import ShotTracker from "../components/ShotTracker";
 import NewGameModal from "../components/NewGameModal";
 import { PlusIcon } from '@heroicons/react/24/solid';
@@ -16,7 +14,6 @@ export default function Home() {
   const shots = useGameStore((state) => state.shots);
   const setTeams = useGameStore((state) => state.setTeams);
   const setSelectedPlayer = useGameStore((state) => state.setSelectedPlayer);
-  const addShot = useGameStore((state) => state.addShot);
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [endGameConfirmOpen, setEndGameConfirmOpen] = useState(false);
@@ -38,7 +35,7 @@ export default function Home() {
         setSelectedPlayer(players[0] || null);
       }
     })();
-  }, []);
+  }, [setCurrentGameId, setTeams, setSelectedPlayer]);
 
   function handleNewGameClick() {
     if (currentGameId && shots.length > 0) {
@@ -86,7 +83,7 @@ export default function Home() {
             );
             // Rebuild teams with player objects
             const teamSizes = teamsInput.map(t => t.length);
-            let idx = 0;
+            const idx = 0;
             const teams: Teams = [
               players.slice(idx, idx + teamSizes[0]),
               players.slice(idx + teamSizes[0], idx + teamSizes[0] + teamSizes[1])
@@ -131,7 +128,7 @@ export default function Home() {
                     await endGame(currentGameId);
                     setCurrentGameId("");
                     setTeams([[], []]);
-                    setSelectedPlayer(undefined as any);
+                    setSelectedPlayer(null);
                     resetShots();
                     // Optionally reload the next active game
                     const activeGame = await getActiveGame();

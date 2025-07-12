@@ -3,8 +3,6 @@ import { useState } from "react";
 import { useGameStore } from "../store/gameStore";
 import PlayerSelector from "./PlayerSelector";
 import type { Teams, Player } from "../store/gameStore";
-import ShotForm from "./ShotForm";
-import CupGrid from "./CupGrid";
 import { logShot } from "../services/db";
 import { ArrowUpCircleIcon } from '@heroicons/react/24/solid';
 
@@ -61,7 +59,7 @@ export default function ShotTracker({ teams, selectedPlayer, setSelectedPlayer }
     try {
       await logShot(shot);
       console.log("Logged shot to Supabase");
-    } catch (e) {
+    } catch {
       // Already logged in logShot
     }
     setType('throw');

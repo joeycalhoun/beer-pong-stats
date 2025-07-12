@@ -4,6 +4,7 @@ import { supabase } from "../../lib/supabase";
 import CompareChart from "../../components/CompareChart";
 import StatCard from "../../components/StatCard";
 import { ArrowTrendingUpIcon, UserCircleIcon, ArrowsRightLeftIcon } from '@heroicons/react/24/solid';
+import type { Player, Shot } from "../../store/gameStore";
 
 function CompareTitle() {
   return (
@@ -15,7 +16,7 @@ function CompareTitle() {
 }
 
 function PlayerDropdown({ players, value, onChange, label, color, disabledIds, iconClass }: {
-  players: any[];
+  players: Player[];
   value: string;
   onChange: (id: string) => void;
   label: string;
@@ -67,29 +68,29 @@ function PlayerDropdown({ players, value, onChange, label, color, disabledIds, i
 }
 
 export default function ComparePage() {
-  const [players, setPlayers] = useState<any[]>([]);
+  const [players, setPlayers] = useState<Player[]>([]);
   const [player1, setPlayer1] = useState<string>("");
   const [player2, setPlayer2] = useState<string>("");
-  const [shots1, setShots1] = useState<any[]>([]);
-  const [shots2, setShots2] = useState<any[]>([]);
+  const [shots1, setShots1] = useState<Shot[]>([]);
+  const [shots2, setShots2] = useState<Shot[]>([]);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     setLoading(true);
     supabase.from("players").select("*").then(({ data }) => {
-      setPlayers(data || []);
+      setPlayers((data as Player[]) || []);
       setLoading(false);
     });
   }, []);
   useEffect(() => {
     if (player1) {
-      supabase.from("shots").select("*").eq("player_id", player1).then(({ data }) => setShots1(data || []));
+      supabase.from("shots").select("*").eq("player_id", player1).then(({ data }) => setShots1((data as Shot[]) || []));
     } else {
       setShots1([]);
     }
   }, [player1]);
   useEffect(() => {
     if (player2) {
-      supabase.from("shots").select("*").eq("player_id", player2).then(({ data }) => setShots2(data || []));
+      supabase.from("shots").select("*").eq("player_id", player2).then(({ data }) => setShots2((data as Shot[]) || []));
     } else {
       setShots2([]);
     }
@@ -126,25 +127,37 @@ export default function ComparePage() {
           {loading || (player1 && shots1.length === 0) ? (
             <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl shadow-lg p-4 animate-pulse h-40" />
           ) : player1 ? (
-            <StatCard player={players.find(p => p.id === player1)} shots={shots1.map(s => ({ ...s, player_id: player1 }))} />
+            (() => {
+              const playerObj = players.find(p => p.id === player1);
+              return playerObj ? <StatCard player={playerObj} shots={shots1} /> : null;
+            })()
           ) : null}
         </div>
         <div className="flex-1">
           {loading || (player2 && shots2.length === 0) ? (
             <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl shadow-lg p-4 animate-pulse h-40" />
           ) : player2 ? (
-            <StatCard player={players.find(p => p.id === player2)} shots={shots2.map(s => ({ ...s, player_id: player2 }))} />
+            (() => {
+              const playerObj = players.find(p => p.id === player2);
+              return playerObj ? <StatCard player={playerObj} shots={shots2} /> : null;
+            })()
           ) : null}
         </div>
       </div>
       <div className="w-full bg-zinc-900/90 border border-zinc-800 rounded-2xl shadow-lg p-6 animate-fadein">
         {showChart ? (
-          <CompareChart
-            player1={players.find(p => p.id === player1)}
-            player2={players.find(p => p.id === player2)}
-            shots1={shots1}
-            shots2={shots2}
-          />
+          (() => {
+            const playerObj1 = players.find(p => p.id === player1);
+            const playerObj2 = players.find(p => p.id === player2);
+            return playerObj1 && playerObj2 ? (
+              <CompareChart
+                player1={playerObj1}
+                player2={playerObj2}
+                shots1={shots1.filter(s => s.type === 'throw' || s.type === 'bounce') as Array<{ made: boolean; type: 'throw' | 'bounce'; }>}
+                shots2={shots2.filter(s => s.type === 'throw' || s.type === 'bounce') as Array<{ made: boolean; type: 'throw' | 'bounce'; }>}
+              />
+            ) : null;
+          })()
         ) : (
           <div className="text-zinc-400 text-center py-12">Select two different players to compare their stats.</div>
         )}

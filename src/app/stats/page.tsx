@@ -3,13 +3,14 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import StatCard from "../../components/StatCard";
 import { getGamesForPlayer } from "../../services/db";
+import type { Player, Shot } from "../../store/gameStore";
 import { FunnelIcon, XMarkIcon, CheckCircleIcon, Squares2X2Icon } from '@heroicons/react/24/solid';
 import { CupGridHeatMap } from "../../components/CupGrid";
 import { cupHitFreq } from "../../lib/utils";
 
 export default function StatsPage() {
-  const [players, setPlayers] = useState<any[]>([]);
-  const [shots, setShots] = useState<any[]>([]);
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [shots, setShots] = useState<Shot[]>([]);
   const [playerGames, setPlayerGames] = useState<Record<string, { id: string; started_at: string; name: string }[]>>({});
   const [selectedGames, setSelectedGames] = useState<Record<string, string[]>>({});
   const [filterModalPlayer, setFilterModalPlayer] = useState<string | null>(null);
@@ -25,7 +26,7 @@ export default function StatsPage() {
       // Fetch games for each player
       if (playersData) {
         const gamesByPlayer: Record<string, { id: string; started_at: string; name: string }[]> = {};
-        await Promise.all(playersData.map(async (player: any) => {
+        await Promise.all((playersData as Player[]).map(async (player) => {
           const games = await getGamesForPlayer(player.id);
           gamesByPlayer[player.id] = games;
         }));

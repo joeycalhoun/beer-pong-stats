@@ -24,7 +24,7 @@ interface GameStore {
   shots: Shot[];
   currentGameId: string | null;
   setTeams: (teams: Teams) => void;
-  setSelectedPlayer: (player: Player) => void;
+  setSelectedPlayer: (player: Player | null) => void;
   addShot: (shot: Shot) => void;
   setCurrentGameId: (id: string) => void;
   resetShots: () => void;

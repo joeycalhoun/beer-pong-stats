@@ -1,12 +1,12 @@
 import { supabase } from "../lib/supabase";
-import { Shot } from "../store/gameStore";
+import type { Shot, Player } from "../store/gameStore";
 
 export async function logShot(shot: Shot): Promise<void> {
   // Omit id so Supabase generates it
   const { id, ...shotWithoutId } = shot;
+  void id; // explicitly ignore id
   const { error } = await supabase.from("shots").insert([shotWithoutId]);
   if (error) {
-    // eslint-disable-next-line no-console
     console.error("Failed to log shot to Supabase:", error);
     throw error;
   }
@@ -49,7 +49,7 @@ export async function getGamesForPlayer(playerId: string): Promise<{ id: string;
   if (error) throw error;
   console.log('getGamesForPlayer data:', data); // Debug log
   const uniqueGames: Record<string, { id: string; started_at: string; name: string }> = {};
-  for (const row of data as any[]) {
+  for (const row of data as { game_id: string; games: { id: string; started_at: string; name: string } | { id: string; started_at: string; name: string }[] }[]) {
     const game = Array.isArray(row.games) ? row.games[0] : row.games;
     if (game && !uniqueGames[row.game_id]) {
       uniqueGames[row.game_id] = { id: game.id, started_at: game.started_at, name: game.name };
@@ -71,7 +71,7 @@ export async function getPlayersForGame(gameId: string): Promise<{ id: string; n
     .eq("game_id", gameId);
   if (error) throw error;
   // Map to player objects
-  return (data as any[]).map(row => row.players);
+  return (data as { players: Player[] }[]).map(row => row.players[0]);
 }
 
 // Get the most recent active game
