@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+html {
+  min-height: 100%;
+}
+
+body {
+  @apply bg-zinc-950 text-zinc-100 font-sans min-h-screen;
+  transition: background 0.2s, color 0.2s;
+}
+
+/* Remove Next.js template variables and theme blocks */
+
+/* Custom scrollbar for dark mode */
+::-webkit-scrollbar {
+  width: 8px;
+  background: #18181b;
+}
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 4px;
+}
+
+/* Animation for bottom sheet modal */
+@layer utilities {
+  .animate-slideup {
+    animation: slideup 0.25s cubic-bezier(0.4,0,0.2,1);
+  }
+  @keyframes slideup {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .scale-tap {
+    transition: transform 0.1s cubic-bezier(0.4,0,0.2,1);
+  }
+  .active\:scale-95:active {
+    transform: scale(0.95);
+  }
+}
+
+/* Animation for fade-in */
+@layer utilities {
+  .animate-fadein {
+    animation: fadein 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+  @keyframes fadein {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+@layer utilities {
+  .animate-title-letter {
+    animation: title-letter-fadein 0.5s cubic-bezier(0.4,0,0.2,1) both;
+  }
+  @keyframes title-letter-fadein {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
